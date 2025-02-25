@@ -99,7 +99,8 @@ module iob_ibex2axi #(
   
   
   // Assign final output 
-  assign ibex_gnt_o = (arready_i & ~ibex_we_i) | (wready_i & ibex_we_i);
+   assign ibex_gnt_o = (arready_i & ~ibex_we_i) | (wready_i & ibex_we_i);
+  //assign ibex_gnt_o = (arready_i & ~ibex_we_i) | (awready_i & wready_i & ibex_we_i);
 
   // WRITE Operation  
   // Ibex wants to write something
@@ -168,5 +169,6 @@ module iob_ibex2axi #(
   assign arlock_o  = '0;
   assign arcache_o = '0;
   assign arqos_o   = '0;
+  assign wlast_o = '1;
 
 endmodule
