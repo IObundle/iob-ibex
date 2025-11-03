@@ -1,0 +1,417 @@
+# ----------------------------------------------------------------
+# 1) Register List JSON (--json) [wrapped_registers.json]
+# * Mandatory
+# ----------------------------------------------------------------
+#  States which registers exist in the architecture.
+#  Registers can be:
+#   - Simple strings
+#   - Objects with "name", optional "indexes", and optional "disable"
+#
+# Example:
+#
+# {
+#   "ibex_csr.sv": [
+#     "shadow",
+#     { "name": "mstatus", 
+#       "disable": "dis_flag"},
+#     { "name": "irq",
+#       "indexes": [ {"default_min": 0, "default_max": 3},
+#                    {"default_min": 0, "default_max": 1} ] 
+#     } 
+#   ],
+#   "ibex_decoder.sv": [ "opcode" ]
+# }
+#
+# This enables: {shadow, mstatus, irq_0_0..irq_3_0..irq_0_1..irq_3_1}
+# from ibex_csr.sv;
+# and {opcode} from ibex_decoder.sv
+
+{
+  "ibex_controller.sv": [
+    "mem_resp_intg_err_irq_pending_q",
+    "mem_resp_intg_err_addr_q",
+    "debug_cause_q",
+    "ctrl_fsm_cs",
+    "nmi_mode_q",
+    "do_single_step_q",
+    "debug_mode_q",
+    "enter_debug_mode_prio_q",
+    "load_err_q",
+    "store_err_q",
+    "exc_req_q",
+    "illegal_insn_q"
+  ],
+
+  "ibex_core.sv": [
+    "last_fetch_enable",
+    "pc_at_fetch_disable",
+    {
+      "name": "rvfi_instr_new_wb_q",
+      "disable":"dis_RVFI"
+    },
+    {
+      "name": "rvfi_irq_valid",
+      "disable":"dis_RVFI"
+    },
+    {
+      "name": "rvfi_ext_stage_pre_mip_0",
+      "disable":"dis_RVFI"
+    },
+    {
+      "name": "rvfi_ext_stage_nmi_0",
+      "disable":"dis_RVFI"
+    },
+    {
+      "name": "rvfi_ext_stage_nmi_int_0",
+      "disable":"dis_RVFI"
+    },
+    {
+      "name": "rvfi_ext_stage_debug_req0",
+      "disable":"dis_RVFI"
+    },
+    {
+      "name": "rvfi_ext_stage_irq_valid",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_halt",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_trap",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_intr",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_order",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_insn",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_mode",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_ixl",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rs1_addr",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rs2_addr",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rs3_addr",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_pc_rdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_pc_wdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_mem_rmask",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_mem_wmask",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rs1_rdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rs2_rdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rs3_rdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_mem_wdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_mem_addr",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rd_addr",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_rd_wdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_stage_mem_rdata",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_ext_stage_debug_mode",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_ext_stage_mcycle",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_ext_stage_ic_scr_key_valid",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0}
+      ]
+    },
+    {
+      "name": "rvfi_ext_stage_mhpmcounters",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0},
+        { "default_min": 0, "default_max": 9 }
+      ]
+    },
+    {
+      "name": "rvfi_ext_stage_mhpmcountersh",
+      "disable":"dis_RVFI",
+      "indexes": [
+        { "default_min": 0, "default_max": 0},
+        { "default_min": 0, "default_max": 9 }
+      ]
+    }
+  ],
+  
+  "ibex_cs_registers.sv": [
+    "priv_lvl_q",
+    "mcountinhibit"
+  ],
+  
+  "ibex_csr.sv": [
+    "rdata",
+    "shadow"
+  ],
+  
+  "ibex_decoder.sv": [
+    "use_rs3"
+  ],
+  
+  "ibex_dummy_instr.sv": [
+    "dummy_instr_seed",
+    "dummy_cnt"
+  ],
+  
+  "ibex_fetch_fifo.sv": [
+    "instr_addr",
+    "instr_addr_no_rst",
+    "valid",
+    {
+      "name": "rdata",
+      "indexes": [
+        { "default_min": 0, "default_max": 2}
+      ]
+    },
+    {
+      "name": "err",
+      "indexes": [
+        {"default_min": 0, "default_max": 2}
+      ]
+    }
+  ],
+  
+  "ibex_id_stage.sv": [
+    {
+      "name": "imd_val_q_reg",
+      "indexes": [
+        { "default_min": 0, "default_max": 1}
+      ]
+    },
+    "branch_set_raw",
+    "branch_jump_set_done",
+    "branch_taken",
+    "id_fsm_q"
+  ],
+
+  "ibex_top.sv": [
+    "core_busy",
+    "scramble_key",
+    "scramble_nonce",
+    "scramble_key_valid",
+    "scramble_req",
+    "sampled_scramble_key",
+    {
+      "name": "pending_dside_accesses",
+      "indexes": [
+        {"default_min": 0, "default_max": 1}
+      ]
+    }
+  ],
+
+  "ibex_if_stage.sv": [
+    "dummy_instr_id",
+    "instr_valid_id_q_reg",
+    "instr_new_id_q_reg",
+    "instr_rdata_id",
+    "instr_rdata_alu_id",
+    "instr_fetch_err",
+    "instr_fetch_err_plus2",
+    "instr_rdata_c_id",
+    "instr_is_compressed_id",
+    "illegal_c_insn_id",
+    "pc_id",
+    "instr_rdata_id_no_rst",
+    "instr_rdata_alu_id_no_rst",
+    "instr_fetch_err_no_rst",
+    "instr_fetch_err_plus2_no_rst",
+    "instr_rdata_c_id_no_rst",
+    "instr_is_compressed_id_no_rst",
+    "illegal_c_insn_id_no_rst",
+    "pc_id_no_rst",
+    "prev_instr_seq",
+    "instr_bp_taken",
+    "instr_bp_taken_no_rst",
+    "instr_skid_valid_q",
+    "instr_skid_bp_taken_q",
+    "instr_skid_data_q",
+    "instr_skid_addr_q",
+    "instr_skid_bp_taken_q_no_rst",
+    "instr_skid_data_q_no_rst",
+    "instr_skid_addr_q_no_rst"
+  ],
+
+  "ibex_load_store_unit.sv": [
+    "rdata",
+    "rdata_offset",
+    "data_type",
+    "data_sign_ext",
+    "data_we",
+    "addr_last",
+    "ls_fsm_cs",
+    "handle_misaligned",
+    "pmp_err",
+    "lsu_err",
+    "fcov_mis_2_en",
+    "fcov_mis_bus_err_1"
+  ],
+
+  "ibex_lockstep.sv": [
+    "shadow_inputs_0",
+    "shadow_inputs_1",
+    "shadow_tag_rdata_0",
+    "shadow_tag_rdata_1",
+    "shadow_data_rdata_0",
+    "shadow_data_rdata_1"
+  ],
+  
+  "ibex_prefetch_buffer.sv": [
+    "stored_addr",
+    "fetch_addr",
+    "valid_req",
+    "discard_req",
+    "rdata_outstanding",
+    "branch_discard"
+  ],
+
+  "ibex_wb_stage.sv": [
+    "wb_valid",
+    "rf_we_wb",
+    "rf_waddr_wb",
+    "rf_wdata_wb",
+    "wb_instr_type",
+    "wb_pc",
+    "wb_compressed",
+    "wb_count",
+    {
+      "name": "dummy_instr_wb",
+      "disable":"dis_DummyInstructions"
+    }
+  ]
+
+}

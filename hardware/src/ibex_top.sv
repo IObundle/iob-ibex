@@ -146,14 +146,14 @@ module ibex_top import ibex_pkg::*; #(
   input logic                          scan_rst_ni
 );
 
-  localparam bit          Lockstep              = SecureIbex;
+  localparam bit          Lockstep              = `FTM_LOCKSTEP;
   localparam bit          ResetAll              = Lockstep;
-  localparam bit          DummyInstructions     = SecureIbex;
-  localparam bit          RegFileECC            = SecureIbex;
-  localparam bit          RegFileWrenCheck      = SecureIbex;
-  localparam bit          RegFileRdataMuxCheck  = SecureIbex;
+  localparam bit          DummyInstructions     = `FTM_DUMMY_INSTR;
+  localparam bit          RegFileECC            = `FTM_RF_ECC;
+  localparam bit          RegFileWrenCheck      = `FTM_RF_WE_GLITCH;
+  localparam bit          RegFileRdataMuxCheck  = `FTM_RF_RADDR_GLITCH;
   localparam int unsigned RegFileDataWidth      = RegFileECC ? 32 + 7 : 32;
-  localparam bit          MemECC                = '0;
+  localparam bit          MemECC                = `FTM_BUS_INTEGRITY;
   localparam int unsigned MemDataWidth          = MemECC ? 32 + 7 : 32;
   // Icache parameters
   localparam int unsigned BusSizeECC        = ICacheECC ? (BUS_SIZE + 7) : BUS_SIZE;
@@ -207,11 +207,12 @@ module ibex_top import ibex_pkg::*; #(
 
   ibex_mubi_t                  fetch_enable_buf;
 
+
   /////////////////////
   // Main clock gate //
   /////////////////////
 
-  if (SecureIbex) begin : g_clock_en_secure
+  if (`FTM_SECURE_GUARDS) begin : g_clock_en_secure
     // For secure Ibex core_busy_q must be a specific multi-bit pattern to enable the clock.
     prim_flop #(
       .Width($bits(ibex_mubi_t)),
@@ -226,13 +227,15 @@ module ibex_top import ibex_pkg::*; #(
   end else begin : g_clock_en_non_secure
     // For non secure Ibex only the bottom bit of core_busy_q is considered. Other FFs can be
     // optimized away during synthesis.
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni) begin
-        core_busy_q <= IbexMuBiOff;
-      end else begin
-        core_busy_q <= core_busy_d;
-      end
-    end
+
+    `IOB_REG_IBEX(4, IbexMuBiOff, '0, !rst_ni, 1'b1, core_busy_d, core_busy_q, core_busy)
+    // always_ff @(posedge clk_i or negedge rst_ni) begin
+    //   if (!rst_ni) begin
+    //     core_busy_q <= IbexMuBiOff;
+    //   end else begin
+    //     core_busy_q <= core_busy_d;
+    //   end
+    // end
     assign clock_en = core_busy_q[0] | debug_req_i | irq_pending | irq_nm_i;
 
     logic unused_core_busy;
@@ -241,12 +244,13 @@ module ibex_top import ibex_pkg::*; #(
 
   assign core_sleep_o = ~clock_en;
 
-  prim_clock_gating core_clock_gate_i (
-    .clk_i    (clk_i),
-    .en_i     (clock_en),
-    .test_en_i(test_en_i),
-    .clk_o    (clk)
-  );
+  // prim_clock_gating core_clock_gate_i (
+  //   .clk_i    (clk_i),
+  //   .en_i     (clock_en),
+  //   .test_en_i(test_en_i),
+  //   .clk_o    (clk)
+  // );
+  assign clk = clk_i;
 
   ////////////////////////
   // Core instantiation //
@@ -517,25 +521,30 @@ module ibex_top import ibex_pkg::*; #(
                                   ic_scr_key_req ? 1'b0                 :
                                                    scramble_key_valid_q;
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni) begin
-        scramble_key_q       <= RndCnstIbexKey;
-        scramble_nonce_q     <= RndCnstIbexNonce;
-      end else if (scramble_key_valid_i) begin
-        scramble_key_q       <= scramble_key_i;
-        scramble_nonce_q     <= scramble_nonce_i;
-      end
-    end
+    `IOB_REG_IBEX(SCRAMBLE_KEY_W, RndCnstIbexKey, '0, !rst_ni, scramble_key_valid_i, scramble_key_i, scramble_key_q, scramble_key)
+    `IOB_REG_IBEX(SCRAMBLE_NONCE_W, RndCnstIbexNonce, '0, !rst_ni, scramble_key_valid_i, scramble_nonce_i, scramble_nonce_q, scramble_nonce)
 
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni) begin
-        scramble_key_valid_q <= 1'b1;
-        scramble_req_q       <= '0;
-      end else begin
-        scramble_key_valid_q <= scramble_key_valid_d;
-        scramble_req_q       <= scramble_req_d;
-      end
-    end
+    `IOB_REG_IBEX(1, '1, '0, !rst_ni, '1, scramble_key_valid_d, scramble_key_valid_q, scramble_key_valid)
+    `IOB_REG_IBEX(1, '0, '0, !rst_ni, '1, scramble_req_d, scramble_req_q, scramble_req)
+    // always_ff @(posedge clk_i or negedge rst_ni) begin
+    //   if (!rst_ni) begin
+    //     scramble_key_q       <= RndCnstIbexKey;
+    //     scramble_nonce_q     <= RndCnstIbexNonce;
+    //   end else if (scramble_key_valid_i) begin
+    //     scramble_key_q       <= scramble_key_i;
+    //     scramble_nonce_q     <= scramble_nonce_i;
+    //   end
+    // end
+
+    // always_ff @(posedge clk_i or negedge rst_ni) begin
+    //   if (!rst_ni) begin
+    //     scramble_key_valid_q <= 1'b1;
+    //     scramble_req_q       <= '0;
+    //   end else begin
+    //     scramble_key_valid_q <= scramble_key_valid_d;
+    //     scramble_req_q       <= scramble_req_d;
+    //   end
+    // end
 
   // Scramble key request starts with invalidate signal from ICache and stays high
   // until we got a valid key.
@@ -649,13 +658,14 @@ module ibex_top import ibex_pkg::*; #(
           // redundant with the sampling performed in the actual design, but that is okay because
           // the assertions exist to check the correct functioning of the design.
           logic [SCRAMBLE_KEY_W-1:0] sampled_scramble_key;
-          always_ff @(posedge clk_i, negedge rst_ni) begin
-            if (!rst_ni) begin
-              sampled_scramble_key <= 'x;
-            end else if (scramble_key_valid_i) begin
-              sampled_scramble_key <= scramble_key_i;
-            end
-          end
+          `IOB_REG_IBEX(SCRAMBLE_KEY_W, 'x, '0, !rst_ni, scramble_key_valid_i, scramble_key_i, sampled_scramble_key, sampled_scramble_key)
+          // always_ff @(posedge clk_i, negedge rst_ni) begin
+          //   if (!rst_ni) begin
+          //     sampled_scramble_key <= 'x;
+          //   end else if (scramble_key_valid_i) begin
+          //     sampled_scramble_key <= scramble_key_i;
+          //   end
+          // end
 
           // Ensure that when a scramble key is received, it is correctly applied to the icache
           // scrambled memory primitives.  The upper bound in the cycle ranges below is not exact,
@@ -1165,23 +1175,33 @@ module ibex_top import ibex_pkg::*; #(
     pending_access_t pending_dside_accesses_d[MaxOutstandingDSideAccesses];
     pending_access_t pending_dside_accesses_shifted[MaxOutstandingDSideAccesses];
 
+    // Manually instantiate the IOB_REG_IBEX macros
+    `IOB_REG_IBEX(2, '0, '0, !rst_ni, '1, pending_dside_accesses_d[0], pending_dside_accesses_q[0], pending_dside_accesses_0)
+    `IOB_REG_IBEX(2, '0, '0, !rst_ni, '1, pending_dside_accesses_d[1], pending_dside_accesses_q[1], pending_dside_accesses_1)
+
+
     for (genvar i = 0; i < MaxOutstandingDSideAccesses; i++) begin : g_dside_tracker
-      always_ff @(posedge clk or negedge rst_ni) begin
-        if (!rst_ni) begin
-          pending_dside_accesses_q[i] <= '0;
-        end else begin
-          pending_dside_accesses_q[i] <= pending_dside_accesses_d[i];
-        end
-      end
+      // always_ff @(posedge clk or negedge rst_ni) begin
+      //   if (!rst_ni) begin
+      //     pending_dside_accesses_q[i] <= '0;
+      //   end else begin
+      //     pending_dside_accesses_q[i] <= pending_dside_accesses_d[i];
+      //   end
+      // end
 
-      always_comb begin
-        pending_dside_accesses_shifted[i] = pending_dside_accesses_q[i];
-
-        if (data_rvalid_i) begin
-          if (i != MaxOutstandingDSideAccesses - 1) begin
-            pending_dside_accesses_shifted[i] = pending_dside_accesses_q[i + 1];
-          end else begin
-            pending_dside_accesses_shifted[i] = '0;
+      // Slightly changed code from lowrisc:ibex, to correct a warning
+      for (genvar i = 0; i < MaxOutstandingDSideAccesses; i++) begin : g_track_pending
+        if (i < MaxOutstandingDSideAccesses-1) begin : g_mid  // generate-time condition
+          always_comb begin
+            pending_dside_accesses_shifted[i] = pending_dside_accesses_q[i];
+            if (data_rvalid_i)
+              pending_dside_accesses_shifted[i] = pending_dside_accesses_q[i+1];
+          end
+        end else begin : g_last
+          always_comb begin
+            pending_dside_accesses_shifted[i] = pending_dside_accesses_q[i];
+            if (data_rvalid_i)
+              pending_dside_accesses_shifted[i] = '0;
           end
         end
       end
@@ -1219,7 +1239,7 @@ module ibex_top import ibex_pkg::*; #(
     // Should only see a request response if we're expecting one
     `ASSERT(PendingAccessTrackingCorrect, data_rvalid_i |-> pending_dside_accesses_q[0])
 
-    if (SecureIbex) begin : g_secure_ibex_mem_assert
+    if (`FTM_SECURE_GUARDS) begin : g_secure_ibex_mem_assert
       // For SecureIbex responses to both writes and reads must specify rdata and rdata_intg (for
       // writes rdata is effectively ignored by rdata_intg still checked against rdata)
       `ASSERT_KNOWN_IF(IbexDataRPayloadX, {data_rdata_i, data_rdata_intg_i},

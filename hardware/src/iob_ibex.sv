@@ -16,7 +16,7 @@ module iob_ibex import ibex_pkg::*; #(
    input                       cke_i,
    input                       arst_i,
    // rst_i
-   input                       rst_i,
+   //input                       rst_i,
    // i_bus_m
    output [AXI_ADDR_W - 2-1:0] ibus_axi_araddr_o,
    output [             3-1:0] ibus_axi_arprot_o,
@@ -260,18 +260,24 @@ module iob_ibex import ibex_pkg::*; #(
    );
 
 
+
+   // ---- Fetch-enable (multi-bit) and optional reset request
+   ibex_mubi_t  fetch_enable_core;
+   logic        core_reset_req;
+
+
    /*
- * Some parameters' definitions
- */
+   * Some parameters' definitions
+   */
 
    parameter bit RV32E = 1'b0;
-   parameter ibex_pkg::rv32m_e RV32M = ibex_pkg::RV32MSingleCycle;
-   parameter ibex_pkg::rv32b_e RV32B = ibex_pkg::RV32BOTEarlGrey;
-   parameter ibex_pkg::regfile_e RegFile = ibex_pkg::RegFileFF;
-   parameter bit BranchTargetALU = 1'b1;
-   parameter bit WritebackStage = 1'b1;
-   parameter bit ICache = 1'b0;
-   parameter bit ICacheECC = 1'b0;
+   parameter ibex_pkg::rv32m_e RV32M = ibex_pkg::RV32MNone;
+   parameter ibex_pkg::rv32b_e RV32B = ibex_pkg::RV32BNone;
+   parameter ibex_pkg::regfile_e RegFile = ibex_pkg::RegFileFPGA;
+   parameter bit BranchTargetALU = 1'b0;
+   parameter bit WritebackStage = 1'b0;
+   parameter bit ICache = 1'b1;
+   parameter bit ICacheECC = `FTM_ICACHE_ECC;
    parameter bit ICacheScramble = 1'b0;
    parameter bit BranchPredictor = 1'b0;
    parameter bit DbgTriggerEn = 1'b1;
@@ -351,20 +357,31 @@ module iob_ibex import ibex_pkg::*; #(
       .scramble_req_o      (),
 
       .debug_req_i        ('0),
-      .crash_dump_o       (),
-      .double_fault_seen_o(),
 
-      .fetch_enable_i        (ibex_pkg::IbexMuBiOn),
-      .alert_minor_o         (),
-      .alert_major_internal_o(),
-      .alert_major_bus_o     (),
-      .core_sleep_o          ()
+      // Fetch control (input) from fault manager
+      .fetch_enable_i          (fetch_enable_core),
+
+      // Alerts (outputs) to fault manager
+      .alert_minor_o           (alert_minor),
+      .alert_major_internal_o  (alert_major_internal),
+      .alert_major_bus_o       (alert_major_bus),
+      .double_fault_seen_o     (double_fault_seen),
+
+      // Status (outputs) to fault manager
+      .core_sleep_o            (core_sleep),
+      .crash_dump_o            (crash_dump)
    );
+
+
+   // No manager: keep core enabled, no reset request
+   assign fetch_enable_core = IbexMuBiOn;
+   assign core_reset_req    = 1'b0;
 
    assign instr_addr_o          = instr_addr_int[31:2];
    assign data_addr_o           = data_addr_int[31:2];
 
-   assign cpu_reset             = (rst_i) | (arst_i);
+   //assign cpu_reset             = (rst_i) | (arst_i);
+   assign cpu_reset             = (arst_i);
    assign cpu_reset_neg         = !(cpu_reset);
 
    assign ibus_axi_awvalid_o    = 1'b0;
@@ -388,6 +405,24 @@ module iob_ibex import ibex_pkg::*; #(
    assign ibus_axi_awaddr_o_int = {ibus_axi_awaddr_o, 2'b0};
    assign dbus_axi_araddr_o_int = {dbus_axi_araddr_o, 2'b0};
    assign dbus_axi_awaddr_o_int = {dbus_axi_awaddr_o, 2'b0};
+
+   // Connect unused CLINT interface to zero
+   assign clint_iob_rvalid_o = 1'b0;
+   assign clint_iob_rdata_o = 20'b0;
+   assign clint_iob_ready_o = 1'b0;
+   //clint_iob_valid_i,
+   //clint_iob_addr_i,
+   //clint_iob_wdata_i,
+   //clint_iob_wstrb_i
+
+   // Connect unused PLIC interface to zero
+   assign plic_iob_rvalid_o = 1'b0;
+   assign plic_iob_rdata_o = 14'b0;
+   assign plic_iob_ready_o = 1'b0;
+   //plic_iob_valid_i,
+   //plic_iob_addr_i,
+   //plic_iob_wdata_i,
+   //plic_iob_wstrb_i,
 
 
 
