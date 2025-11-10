@@ -723,9 +723,10 @@ module ibex_top import ibex_pkg::*; #(
           .rdata_o     (ic_data_rdata[way]),
           .cfg_i       (ram_cfg_i)
         );
-
-        assign icache_tag_alert  = '{default:'b0};
-        assign icache_data_alert = '{default:'b0};
+        // assign icache_tag_alert  = '{default:'b0};
+        // assign icache_data_alert = '{default:'b0};
+        assign icache_tag_alert[way]  = 1'b0;
+        assign icache_data_alert[way] = 1'b0; 
       end
     end
 
